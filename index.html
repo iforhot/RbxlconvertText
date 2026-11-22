@@ -13,12 +13,12 @@ var u8=new Uint8Array(buf),dv=new DataView(buf),p=32;
 function u32(){var v=dv.getUint32(p,true);p+=4;return v;}
 function str(n){var x=new TextDecoder().decode(u8.subarray(p,p+n));p+=n;return x;}
 function rstr(){return str(u32());}
-function lz4(src,len){var dst=new Uint8Array(len),sp=0,dp=0;while(sp<src.length){var t=src.at(sp++),ll=t>>4;if(ll==15){var b;do{b=src.at(sp++);ll+=b;}while(b==255);}for(var i=0;i<ll;i++)dst.set([src.at(sp++)],dp++);if(sp>=src.length)break;var off=src.at(sp)|(src.at(sp+1)<<8);sp+=2;var ml=(t&15)+4;if((t&15)==15){var b;do{b=src.at(sp++);ml+=b;}while(b==255);}var mp=dp-off;for(var i=0;i<ml;i++)dst.set([dst.at(mp++)],dp++);}return dst;}
+function lz4(src,len){var dst=new Uint8Array(len),sp=0,dp=0;while(sp<src.length){var t=src.at(sp++),ll=t>>4;if(ll==15){var b;do{b=src.at(sp++);ll+=b;}while(b==255);}for(var i=0;i<ll;i++)dst.set(new Array(src.at(sp++)),dp++);if(sp>=src.length)break;var off=src.at(sp)|(src.at(sp+1)<<8);sp+=2;var ml=(t&15)+4;if((t&15)==15){var b;do{b=src.at(sp++);ml+=b;}while(b==255);}var mp=dp-off;for(var i=0;i<ml;i++)dst.set(new Array(dst.at(mp++)),dp++);}return dst;}
 function zz(v){return(v>>>1)^-(v&1);}
 function flt(u){var b=new ArrayBuffer(4);new DataView(b).setUint32(0,((u>>>1)|(u<<31))>>>0,true);return new DataView(b).getFloat32(0,true);}
-function ii32(a,o,c){var r=new Int32Array(c);for(var i=0;i<c;i++)r.set([zz(((a.at(o+i)<<24)|(a.at(o+c+i)<<16)|(a.at(o+c*2+i)<<8)|a.at(o+c*3+i))>>>0)],i);return r;}
-function if32(a,o,c){var r=new Float32Array(c);for(var i=0;i<c;i++)r.set([flt(((a.at(o+i)<<24)|(a.at(o+c+i)<<16)|(a.at(o+c*2+i)<<8)|a.at(o+c*3+i))>>>0)],i);return r;}
-function iu32(a,o,c){var r=new Uint32Array(c);for(var i=0;i<c;i++)r.set([((a.at(o+i)<<24)|(a.at(o+c+i)<<16)|(a.at(o+c*2+i)<<8)|a.at(o+c*3+i))>>>0],i);return r;}
+function ii32(a,o,c){var r=new Int32Array(c);for(var i=0;i<c;i++)r.set(new Array(zz(((a.at(o+i)<<24)|(a.at(o+c+i)<<16)|(a.at(o+c*2+i)<<8)|a.at(o+c*3+i))>>>0)),i);return r;}
+function if32(a,o,c){var r=new Float32Array(c);for(var i=0;i<c;i++)r.set(new Array(flt(((a.at(o+i)<<24)|(a.at(o+c+i)<<16)|(a.at(o+c*2+i)<<8)|a.at(o+c*3+i))>>>0)),i);return r;}
+function iu32(a,o,c){var r=new Uint32Array(c);for(var i=0;i<c;i++)r.set(new Array(((a.at(o+i)<<24)|(a.at(o+c+i)<<16)|(a.at(o+c*2+i)<<8)|a.at(o+c*3+i))>>>0),i);return r;}
 function rnd(n){return Math.round((n||0)*100)/100;}
 function b64(bytes){var bin='';for(var i=0;i<bytes.length;i++)bin+=String.fromCharCode(bytes.at(i));return btoa(bin);}
 var N=new Array(new Array(1,0,0),new Array(0,1,0),new Array(0,0,1),new Array(-1,0,0),new Array(0,-1,0),new Array(0,0,-1));
@@ -98,20 +98,24 @@ var lines=arr.map(o=>{
   return new Array(o.id,o.pid,o.c,o.n==o.c?'':cln(o.n),o.s.join(','),o.cf.join(','),colStr,o.m,o.t||'',o.a?'':'0',o.cc?'':'0',o.sh,cln(o.mid),cln(o.tid),ms,cln(o.tx),o.fc,cln(o.val),o.src).join('|');
 });
 
-var chunks=new Array(),buf='';
-for(var i=0;i<lines.length;i++){
-  if(buf.length+lines.at(i).length+1>15500&&buf.length>0){chunks.push(buf);buf='';}
-  buf+=lines.at(i)+'\n';
-}
-if(buf.length>0)chunks.push(buf);
-
-chunks.forEach((txt,idx)=>{
+var tot=lines.length,q1=Math.ceil(tot*0.25),h1=Math.ceil(tot*0.5),q3=Math.ceil(tot*0.75);
+function mkBtn(label,start,end){
   var b=document.createElement('button');
-  b.innerText='COPY '+(idx+1)+'/'+chunks.length;
-  b.onclick=()=>{navigator.clipboard.writeText(txt);b.innerText='DONE '+(idx+1);};
+  b.innerText=label;
+  b.onclick=()=>{navigator.clipboard.writeText(lines.slice(start,end).join('\n'));b.innerText='COPIED '+label;};
   btns.appendChild(b);
-});
-s.innerText='COMPRESSED TO '+chunks.length+' PARTS ('+lines.join('\n').length+' chars)';
+}
+mkBtn('QUARTER 1 (0-25%)',0,q1);
+mkBtn('QUARTER 2 (25-50%)',q1,h1);
+mkBtn('QUARTER 3 (50-75%)',h1,q3);
+mkBtn('QUARTER 4 (75-100%)',q3,tot);
+btns.appendChild(document.createElement('br'));
+mkBtn('HALF 1 (0-50%)',0,h1);
+mkBtn('HALF 2 (50-100%)',h1,tot);
+btns.appendChild(document.createElement('br'));
+mkBtn('COPY ALL (100%)',0,tot);
+
+s.innerText='DONE: '+tot+' objects ('+lines.join('\n').length+' chars). Pick Quarter, Half, or All.';
 }catch(err){s.innerText='ERR: '+err.message;}
 };
 </script>
