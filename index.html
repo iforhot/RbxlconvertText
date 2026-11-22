@@ -1,6 +1,7 @@
 <input type="file" id="f">
 <div id="btns"></div>
 <pre id="s">pick .rbxl</pre>
+<script src="https://jsdelivr.net"></script>
 <script>
 document.getElementById('f').onchange=async function(e){
 var s=document.getElementById('s'),btns=document.getElementById('btns');
@@ -14,6 +15,12 @@ function u32(){var v=dv.getUint32(p,true);p+=4;return v;}
 function str(n){var x=new TextDecoder().decode(u8.subarray(p,p+n));p+=n;return x;}
 function rstr(){return str(u32());}
 function lz4(src,len){var dst=new Uint8Array(len),sp=0,dp=0;while(sp<src.length){var t=src.at(sp++),ll=t>>4;if(ll==15){var b;do{b=src.at(sp++);ll+=b;}while(b==255);}for(var i=0;i<ll;i++)dst.set(new Array(src.at(sp++)),dp++);if(sp>=src.length)break;var off=src.at(sp)|(src.at(sp+1)<<8);sp+=2;var ml=(t&15)+4;if((t&15)==15){var b;do{b=src.at(sp++);ml+=b;}while(b==255);}var mp=dp-off;for(var i=0;i<ml;i++)dst.set(new Array(dst.at(mp++)),dp++);}return dst;}
+function decomp(src,len){
+  if(src.length>=4&&src.at(0)==0x28&&src.at(1)==0xB5&&src.at(2)==0x2F&&src.at(3)==0xFD){
+    return fzstd.decompress(src);
+  }
+  return lz4(src,len);
+}
 function zz(v){return(v>>>1)^-(v&1);}
 function flt(u){var b=new ArrayBuffer(4);new DataView(b).setUint32(0,((u>>>1)|(u<<31))>>>0,true);return new DataView(b).getFloat32(0,true);}
 function ii32(a,o,c){var r=new Int32Array(c);for(var i=0;i<c;i++)r.set(new Array(zz(((a.at(o+i)<<24)|(a.at(o+c+i)<<16)|(a.at(o+c*2+i)<<8)|a.at(o+c*3+i))>>>0)),i);return r;}
@@ -27,9 +34,9 @@ var FACES=new Array("Right","Top","Back","Left","Bottom","");
 var SHAPES=new Array("Ball","","Cylinder","Wedge","CornerWedge");
 var T={},I={},SSTR=new Array();
 
-while(p<u8.length){
+while(p+16<=u8.length){
 var ct=str(4),cl=u32(),ul=u32();u32();if(ct=='END\0')break;
-var pay=cl==0?u8.subarray(p,p+ul):lz4(u8.subarray(p,p+cl),ul);p+=(cl>0?cl:ul);
+var pay=cl==0?u8.subarray(p,p+ul):decomp(u8.subarray(p,p+cl),ul);p+=(cl>0?cl:ul);
 var cp=0,cdv=new DataView(pay.buffer,pay.byteOffset,pay.byteLength);
 function cu32(){var v=cdv.getUint32(cp,true);cp+=4;return v;}
 function crbytes(){var l=cu32();var x=pay.subarray(cp,cp+l);cp+=l;return x;}
