@@ -1,12 +1,11 @@
 <input type="file" id="f">
-<button onclick="navigator.clipboard.writeText(window.ALL)">COPY ALL</button>
 <div id="btns"></div>
 <pre id="s">pick .rbxl</pre>
 <script>
 document.getElementById('f').onchange=async function(e){
 var s=document.getElementById('s'),btns=document.getElementById('btns');
 s.innerText='reading...';btns.innerHTML='';
-var buf=await e.target.files[0].arrayBuffer();
+var buf=await e.target.files.arrayBuffer();
 var u8=new Uint8Array(buf),dv=new DataView(buf),p=32;
 function u32(){var v=dv.getUint32(p,true);p+=4;return v;}
 function str(n){var x=new TextDecoder().decode(u8.subarray(p,p+n));p+=n;return x;}
@@ -17,12 +16,12 @@ function flt(u){var b=new ArrayBuffer(4);new DataView(b).setUint32(0,((u>>>1)|(u
 function ii32(a,o,c){var r=new Int32Array(c);for(var i=0;i<c;i++)r[i]=zz(((a[o+i]<<24)|(a[o+c+i]<<16)|(a[o+c*2+i]<<8)|a[o+c*3+i])>>>0);return r;}
 function if32(a,o,c){var r=new Float32Array(c);for(var i=0;i<c;i++)r[i]=flt(((a[o+i]<<24)|(a[o+c+i]<<16)|(a[o+c*2+i]<<8)|a[o+c*3+i])>>>0);return r;}
 function iu32(a,o,c){var r=new Uint32Array(c);for(var i=0;i<c;i++)r[i]=((a[o+i]<<24)|(a[o+c+i]<<16)|(a[o+c*2+i]<<8)|a[o+c*3+i])>>>0;return r;}
-function rnd(n){return Math.round((n||0)*1000)/1000;}
+function rnd(n){return Math.round((n||0)*100)/100;}
 function b64(bytes){var bin='';for(var i=0;i<bytes.length;i++)bin+=String.fromCharCode(bytes[i]);return btoa(bin);}
-var N=[[1,0,0],[0,1,0],[0,0,1],[-1,0,0],[0,-1,0],[0,0,-1]];
-var M={256:"Plastic",272:"SmoothPlastic",288:"Neon",512:"Wood",528:"WoodPlanks",784:"Marble",800:"Slate",816:"Concrete",832:"Granite",848:"Brick",864:"Pebble",880:"Cobblestone",896:"Rock",912:"Sandstone",928:"Basalt",944:"CrackedLava",960:"Limestone",976:"Pavement",1040:"CorrodedMetal",1056:"DiamondPlate",1072:"Foil",1088:"Metal",1280:"Grass",1296:"LeafyGrass",1312:"Sand",1328:"Fabric",1344:"Snow",1360:"Mud",1376:"Ground",1392:"Asphalt",1408:"Salt",1536:"Ice",1552:"Glacier",1568:"Glass",1584:"ForceField"};
-var FACES=["Right","Top","Back","Left","Bottom","Front"];
-var SHAPES=["Ball","Block","Cylinder","Wedge","CornerWedge"];
+var N=[,,,[-1,0,0],[0,-1,0],[0,0,-1]];
+var M={256:"",272:"SmoothPlastic",288:"Neon",512:"Wood",528:"WoodPlanks",784:"Marble",800:"Slate",816:"Concrete",832:"Granite",848:"Brick",864:"Pebble",880:"Cobblestone",896:"Rock",912:"Sandstone",928:"Basalt",944:"CrackedLava",960:"Limestone",976:"Pavement",1040:"CorrodedMetal",1056:"DiamondPlate",1072:"Foil",1088:"Metal",1280:"Grass",1296:"LeafyGrass",1312:"Sand",1328:"Fabric",1344:"Snow",1360:"Mud",1376:"Ground",1392:"Asphalt",1408:"Salt",1536:"Ice",1552:"Glacier",1568:"Glass",1584:"ForceField"};
+var FACES=["Right","Top","Back","Left","Bottom",""];
+var SHAPES=["Ball","","Cylinder","Wedge","CornerWedge"];
 var T={},I={},SSTR=[];
 
 while(p<u8.length){
@@ -33,16 +32,13 @@ function cu32(){var v=cdv.getUint32(cp,true);cp+=4;return v;}
 function crbytes(){var l=cu32();var x=pay.subarray(cp,cp+l);cp+=l;return x;}
 function crstr(){return new TextDecoder().decode(crbytes());}
 
-if(ct=='SSTR'){
-  cp+=4;var sc=cu32();
-  for(var i=0;i<sc;i++){cp+=16;SSTR.push(crstr());}
-}
+if(ct=='SSTR'){cp+=4;var sc=cu32();for(var i=0;i<sc;i++){cp+=16;SSTR.push(crstr());}}
 else if(ct=='INST'){
   var tid=cu32(),cn=crstr();cp++;var cnt=cu32(),d=ii32(pay,cp,cnt);cp+=cnt*4;
   var ids=[],acc=0;
   for(var i=0;i<cnt;i++){
     acc+=d[i];ids.push(acc);
-    I[acc]={id:acc,pid:-1,c:cn,n:cn,s:[4,1,2],is:null,cf:[0,0,0,1,0,0,0,1,0,0,0,1],col:[0.64,0.64,0.64],m:'Plastic',t:0,a:1,cc:1,sh:'Block',mid:'',tid:'',tx:'',fc:'Front',val:'',src:''};
+    I[acc]={id:acc,pid:-1,c:cn,n:cn,s:,is:null,cf:,col:null,m:'',t:0,a:1,cc:1,sh:'',mid:'',tid:'',tx:'',fc:'',val:'',src:''};
   }
   T[tid]={c:cn,ids:ids};
 }
@@ -55,133 +51,63 @@ else if(ct=='PROP'){
       if(pn=='Source'){o.src=b64(raw);}
       else{
         var v=new TextDecoder().decode(raw);
-        if(pn=='Name')o.n=v;
-        else if(pn=='MeshId')o.mid=v;
-        else if(pn=='TextureID')o.tid=v;
-        else if(pn=='Texture')o.tx=v;
-        else if(pn=='Value')o.val=v;
+        if(pn=='Name')o.n=v;else if(pn=='MeshId')o.mid=v;else if(pn=='TextureID')o.tid=v;else if(pn=='Texture')o.tx=v;else if(pn=='Value')o.val=v;
       }
     }
   }
-  else if(dt==2){
-    for(var i=0;i<cnt;i++){
-      var v=pay[cp++]?1:0,o=I[ids[i]];
-      if(pn=='Anchored')o.a=v;
-      else if(pn=='CanCollide')o.cc=v;
-      else if(pn=='Value')o.val=String(v==1);
-    }
-  }
-  else if(dt==3){
-    var v=ii32(pay,cp,cnt);cp+=cnt*4;
-    if(pn=='Value')for(var i=0;i<cnt;i++)I[ids[i]].val=String(v[i]);
-  }
-  else if(dt==4){
-    var v=if32(pay,cp,cnt);cp+=cnt*4;
-    for(var i=0;i<cnt;i++){
-      if(pn=='Transparency')I[ids[i]].t=rnd(v[i]);
-      else if(pn=='Value')I[ids[i]].val=String(rnd(v[i]));
-    }
-  }
-  else if(dt==5){
-    for(var i=0;i<cnt;i++){
-      var v=cdv.getFloat64(cp,true);cp+=8;
-      if(pn=='Value')I[ids[i]].val=String(rnd(v));
-    }
-  }
+  else if(dt==2){for(var i=0;i<cnt;i++){var v=pay[cp++]?1:0,o=I[ids[i]];if(pn=='Anchored')o.a=v;else if(pn=='CanCollide')o.cc=v;else if(pn=='Value')o.val=String(v==1);}}
+  else if(dt==3){var v=ii32(pay,cp,cnt);cp+=cnt*4;if(pn=='Value')for(var i=0;i<cnt;i++)I[ids[i]].val=String(v[i]);}
+  else if(dt==4){var v=if32(pay,cp,cnt);cp+=cnt*4;for(var i=0;i<cnt;i++){if(pn=='Transparency')I[ids[i]].t=rnd(v[i]);else if(pn=='Value')I[ids[i]].val=String(rnd(v[i]));}}
+  else if(dt==5){for(var i=0;i<cnt;i++){var v=cdv.getFloat64(cp,true);cp+=8;if(pn=='Value')I[ids[i]].val=String(rnd(v));}}
   else if(dt==14){
     var x=if32(pay,cp,cnt);cp+=cnt*4;var y=if32(pay,cp,cnt);cp+=cnt*4;var z=if32(pay,cp,cnt);cp+=cnt*4;
-    for(var i=0;i<cnt;i++){
-      if(pn=='size'||pn=='Size')I[ids[i]].s=[rnd(x[i]),rnd(y[i]),rnd(z[i])];
-      else if(pn=='InitialSize')I[ids[i]].is=[rnd(x[i]),rnd(y[i]),rnd(z[i])];
-    }
+    for(var i=0;i<cnt;i++){if(pn=='size'||pn=='Size')I[ids[i]].s=[rnd(x[i]),rnd(y[i]),rnd(z[i])];else if(pn=='InitialSize')I[ids[i]].is=[rnd(x[i]),rnd(y[i]),rnd(z[i])];}
   }
   else if(dt==16){
     var rots=[];
     for(var i=0;i<cnt;i++){
       var oid=pay[cp++],m;
-      if(oid>0){
-        var ri=Math.floor((oid-1)/6),ui=(oid-1)%6;
-        var R=N[ri]||[1,0,0],U=N[ui]||[0,1,0];
-        var B=[R[1]*U[2]-R[2]*U[1],R[2]*U[0]-R[0]*U[2],R[0]*U[1]-R[1]*U[0]];
-        m=[R[0],U[0],B[0],R[1],U[1],B[1],R[2],U[2],B[2]];
-      }else{
-        m=[];for(var k=0;k<9;k++)m.push(rnd(cdv.getFloat32(cp+k*4,true)));cp+=36;
-      }
+      if(oid>0){var ri=Math.floor((oid-1)/6),ui=(oid-1)%6,R=N[ri]||,U=N[ui]||,B=[R*U-R*U,R*U-R*U,R*U-R*U];m=[R,U,B,R,U,B,R,U,B];}
+      else{m=[];for(var k=0;k<9;k++)m.push(rnd(cdv.getFloat32(cp+k*4,true)));cp+=36;}
       rots.push(m);
     }
     var px=if32(pay,cp,cnt);cp+=cnt*4;var py=if32(pay,cp,cnt);cp+=cnt*4;var pz=if32(pay,cp,cnt);cp+=cnt*4;
-    if(pn=='CFrame'){
-      for(var i=0;i<cnt;i++){
-        var m=rots[i];
-        I[ids[i]].cf=[rnd(px[i]),rnd(py[i]),rnd(pz[i]),m[0],m[1],m[2],m[3],m[4],m[5],m[6],m[7],m[8]];
-      }
-    }
+    if(pn=='CFrame')for(var i=0;i<cnt;i++){var m=rots[i];I[ids[i]].cf=[rnd(px[i]),rnd(py[i]),rnd(pz[i]),m,m,m,m,m,m,m,m,m];}
   }
-  else if(dt==18){
-    var v=iu32(pay,cp,cnt);cp+=cnt*4;
-    for(var i=0;i<cnt;i++){
-      if(pn=='Material')I[ids[i]].m=M[v[i]]||'Plastic';
-      else if(pn=='Face')I[ids[i]].fc=FACES[v[i]]||'Front';
-      else if(pn=='shape'||pn=='Shape')I[ids[i]].sh=SHAPES[v[i]]||'Block';
-    }
-  }
-  else if(dt==26){
-    var r=pay.subarray(cp,cp+cnt);cp+=cnt;var g=pay.subarray(cp,cp+cnt);cp+=cnt;var b=pay.subarray(cp,cp+cnt);cp+=cnt;
-    if(pn=='Color3uint8'){
-      for(var i=0;i<cnt;i++)I[ids[i]].col=[rnd(r[i]/255),rnd(g[i]/255),rnd(b[i]/255)];
-    }
-  }
-  else if(dt==28){
-    var idx=iu32(pay,cp,cnt);cp+=cnt*4;
-    for(var i=0;i<cnt;i++){
-      var sv=SSTR[idx[i]]||'';
-      if(pn=='MeshId')I[ids[i]].mid=sv;
-      else if(pn=='TextureID')I[ids[i]].tid=sv;
-    }
-  }
+  else if(dt==18){var v=iu32(pay,cp,cnt);cp+=cnt*4;for(var i=0;i<cnt;i++){if(pn=='Material')I[ids[i]].m=M[v[i]]||'';else if(pn=='Face')I[ids[i]].fc=FACES[v[i]]||'';else if(pn=='shape'||pn=='Shape')I[ids[i]].sh=SHAPES[v[i]]||'';}}
+  else if(dt==26){var r=pay.subarray(cp,cp+cnt);cp+=cnt;var g=pay.subarray(cp,cp+cnt);cp+=cnt;var b=pay.subarray(cp,cp+cnt);cp+=cnt;if(pn=='Color3uint8')for(var i=0;i<cnt;i++)I[ids[i]].col=[rnd(r[i]/255),rnd(g[i]/255),rnd(b[i]/255)];}
+  else if(dt==28){var idx=iu32(pay,cp,cnt);cp+=cnt*4;for(var i=0;i<cnt;i++){var sv=SSTR[idx[i]]||'';if(pn=='MeshId')I[ids[i]].mid=sv;else if(pn=='TextureID')I[ids[i]].tid=sv;}}
 }
-else if(ct=='PRNT'){
-  cp++;var lc=cu32(),cd=ii32(pay,cp,lc);cp+=lc*4;var pd=ii32(pay,cp,lc);cp+=lc*4;
-  var ca=0,pa=0;
-  for(var i=0;i<lc;i++){ca+=cd[i];pa+=pd[i];if(I[ca])I[ca].pid=pa;}
-}
+else if(ct=='PRNT'){cp++;var lc=cu32(),cd=ii32(pay,cp,lc);cp+=lc*4;var pd=ii32(pay,cp,lc);cp+=lc*4;var ca=0,pa=0;for(var i=0;i<lc;i++){ca+=cd[i];pa+=pd[i];if(I[ca])I[ca].pid=pa;}}
 }
 
 var SKIP={Terrain:1,Camera:1,CoreGui:1,CorePackages:1,TouchGui:1,Chat:1,VoiceChatService:1,Players:1,RunService:1,Stats:1,NetworkClient:1,GuiService:1,UserInputService:1,ContextActionService:1,HapticService:1,VRService:1,TweenService:1,TextService:1,MarketplaceService:1,TeleportService:1,BadgeService:1,AssetService:1,InsertService:1,Debris:1,PhysicsService:1,Selection:1,ChangeHistoryService:1,ScriptEditorService:1};
 var arr=Object.values(I).filter(x=>!SKIP[x.c]);
-
 var depthCache={};
-function getDepth(id,seen){
-  if(depthCache[id]!==undefined)return depthCache[id];
-  if(!I[id]||I[id].pid==-1||seen[id])return 0;
-  seen[id]=1;
-  return depthCache[id]=1+getDepth(I[id].pid,seen);
-}
+function getDepth(id,seen){if(depthCache[id]!==undefined)return depthCache[id];if(!I[id]||I[id].pid==-1||seen[id])return 0;seen[id]=1;return depthCache[id]=1+getDepth(I[id].pid,seen);}
 arr.sort((a,b)=>getDepth(a.id,{})-getDepth(b.id,{}));
 
 function cln(x){return String(x||'').replace(/[|\r\n]/g,' ');}
 var lines=arr.map(o=>{
-  var ms=[1,1,1];
-  if(o.c=='MeshPart'&&o.is&&o.is[0]>0&&o.is[1]>0&&o.is[2]>0){
-    ms=[rnd(o.s[0]/o.is[0]),rnd(o.s[1]/o.is[1]),rnd(o.s[2]/o.is[2])];
-  }
-  return [o.id,o.pid,o.c,cln(o.n),o.s.join(','),o.cf.join(','),o.col.join(','),o.m,o.t,o.a,o.cc,o.sh,cln(o.mid),cln(o.tid),ms.join(','),cln(o.tx),o.fc,cln(o.val),o.src].join('|');
+  var ms='';
+  if(o.c=='MeshPart'&&o.is&&o.is>0&&o.is>0&&o.is>0){ms=[rnd(o.s/o.is),rnd(o.s/o.is),rnd(o.s/o.is)].join(',');}
+  var colStr=(o.col&&!(o.col==0.64&&o.col==0.64&&o.col==0.64))?o.col.join(','):'';
+  return [o.id,o.pid,o.c,o.n==o.c?'':cln(o.n),o.s.join(','),o.cf.join(','),colStr,o.m,o.t||'',o.a?'':'0',o.cc?'':'0',o.sh,cln(o.mid),cln(o.tid),ms,cln(o.tx),o.fc,cln(o.val),o.src].join('|');
 });
 
-window.ALL=lines.join('\n');
 var chunks=[],buf='';
 for(var i=0;i<lines.length;i++){
-  if(buf.length+lines[i].length+1>14000&&buf.length>0){chunks.push(buf);buf='';}
+  if(buf.length+lines[i].length+1>15500&&buf.length>0){chunks.push(buf);buf='';}
   buf+=lines[i]+'\n';
 }
 if(buf.length>0)chunks.push(buf);
 
 chunks.forEach((txt,idx)=>{
   var b=document.createElement('button');
-  b.innerText='COPY PART '+(idx+1)+'/'+chunks.length;
-  b.onclick=()=>{navigator.clipboard.writeText(txt);b.innerText='COPIED '+(idx+1);};
+  b.innerText='COPY '+(idx+1)+'/'+chunks.length;
+  b.onclick=()=>{navigator.clipboard.writeText(txt);b.innerText='DONE '+(idx+1);};
   btns.appendChild(b);
 });
-s.innerText='DONE: '+arr.length+' objects in '+chunks.length+' parts ('+window.ALL.length+' chars).';
+s.innerText='COMPRESSED TO '+chunks.length+' PARTS ('+lines.join('\n').length+' chars)';
 };
 </script>
