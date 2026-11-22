@@ -18,6 +18,7 @@ function ii32(a,o,c){var r=new Int32Array(c);for(var i=0;i<c;i++)r[i]=zz(((a[o+i
 function if32(a,o,c){var r=new Float32Array(c);for(var i=0;i<c;i++)r[i]=flt(((a[o+i]<<24)|(a[o+c+i]<<16)|(a[o+c*2+i]<<8)|a[o+c*3+i])>>>0);return r;}
 function iu32(a,o,c){var r=new Uint32Array(c);for(var i=0;i<c;i++)r[i]=((a[o+i]<<24)|(a[o+c+i]<<16)|(a[o+c*2+i]<<8)|a[o+c*3+i])>>>0;return r;}
 function rnd(n){return Math.round((n||0)*1000)/1000;}
+function b64(bytes){var bin='';for(var i=0;i<bytes.length;i++)bin+=String.fromCharCode(bytes[i]);return btoa(bin);}
 var N=[[1,0,0],[0,1,0],[0,0,1],[-1,0,0],[0,-1,0],[0,0,-1]];
 var M={256:"Plastic",272:"SmoothPlastic",288:"Neon",512:"Wood",528:"WoodPlanks",784:"Marble",800:"Slate",816:"Concrete",832:"Granite",848:"Brick",864:"Pebble",880:"Cobblestone",896:"Rock",912:"Sandstone",928:"Basalt",944:"CrackedLava",960:"Limestone",976:"Pavement",1040:"CorrodedMetal",1056:"DiamondPlate",1072:"Foil",1088:"Metal",1280:"Grass",1296:"LeafyGrass",1312:"Sand",1328:"Fabric",1344:"Snow",1360:"Mud",1376:"Ground",1392:"Asphalt",1408:"Salt",1536:"Ice",1552:"Glacier",1568:"Glass",1584:"ForceField"};
 var FACES=["Right","Top","Back","Left","Bottom","Front"];
@@ -29,7 +30,8 @@ var ct=str(4),cl=u32(),ul=u32();u32();if(ct=='END\0')break;
 var pay=cl==0?u8.subarray(p,p+ul):lz4(u8.subarray(p,p+cl),ul);p+=(cl>0?cl:ul);
 var cp=0,cdv=new DataView(pay.buffer,pay.byteOffset,pay.byteLength);
 function cu32(){var v=cdv.getUint32(cp,true);cp+=4;return v;}
-function crstr(){var l=cu32();var x=new TextDecoder().decode(pay.subarray(cp,cp+l));cp+=l;return x;}
+function crbytes(){var l=cu32();var x=pay.subarray(cp,cp+l);cp+=l;return x;}
+function crstr(){return new TextDecoder().decode(crbytes());}
 
 if(ct=='SSTR'){
   cp+=4;var sc=cu32();
@@ -47,15 +49,18 @@ else if(ct=='INST'){
 else if(ct=='PROP'){
   var tid=cu32(),pn=crstr(),dt=pay[cp++],ti=T[tid];if(!ti)continue;
   var cnt=ti.ids.length,ids=ti.ids;
-  if(dt==1){
+  if(dt==1||dt==29){
     for(var i=0;i<cnt;i++){
-      var v=crstr(),o=I[ids[i]];
-      if(pn=='Name')o.n=v;
-      else if(pn=='MeshId')o.mid=v;
-      else if(pn=='TextureID')o.tid=v;
-      else if(pn=='Texture')o.tx=v;
-      else if(pn=='Value')o.val=v;
-      else if(pn=='Source')o.src=v;
+      var raw=crbytes(),o=I[ids[i]];
+      if(pn=='Source'){o.src=b64(raw);}
+      else{
+        var v=new TextDecoder().decode(raw);
+        if(pn=='Name')o.n=v;
+        else if(pn=='MeshId')o.mid=v;
+        else if(pn=='TextureID')o.tid=v;
+        else if(pn=='Texture')o.tx=v;
+        else if(pn=='Value')o.val=v;
+      }
     }
   }
   else if(dt==2){
@@ -142,10 +147,9 @@ else if(ct=='PRNT'){
 }
 }
 
-var SKIP={Terrain:1,Camera:1,CoreGui:1,CorePackages:1,StarterPlayerScripts:1,StarterCharacterScripts:1,TouchGui:1,Chat:1,VoiceChatService:1,Players:1,RunService:1,Stats:1,NetworkClient:1,GuiService:1,UserInputService:1,ContextActionService:1,HapticService:1,VRService:1,TweenService:1,TextService:1,MarketplaceService:1,TeleportService:1,BadgeService:1,AssetService:1,InsertService:1,Debris:1,PhysicsService:1,Selection:1,ChangeHistoryService:1,ScriptEditorService:1};
+var SKIP={Terrain:1,Camera:1,CoreGui:1,CorePackages:1,TouchGui:1,Chat:1,VoiceChatService:1,Players:1,RunService:1,Stats:1,NetworkClient:1,GuiService:1,UserInputService:1,ContextActionService:1,HapticService:1,VRService:1,TweenService:1,TextService:1,MarketplaceService:1,TeleportService:1,BadgeService:1,AssetService:1,InsertService:1,Debris:1,PhysicsService:1,Selection:1,ChangeHistoryService:1,ScriptEditorService:1};
 var arr=Object.values(I).filter(x=>!SKIP[x.c]);
 
-// Sort top-down by depth so parents always exist before children
 var depthCache={};
 function getDepth(id,seen){
   if(depthCache[id]!==undefined)return depthCache[id];
@@ -161,7 +165,7 @@ var lines=arr.map(o=>{
   if(o.c=='MeshPart'&&o.is&&o.is[0]>0&&o.is[1]>0&&o.is[2]>0){
     ms=[rnd(o.s[0]/o.is[0]),rnd(o.s[1]/o.is[1]),rnd(o.s[2]/o.is[2])];
   }
-  return [o.id,o.pid,o.c,cln(o.n),o.s.join(','),o.cf.join(','),o.col.join(','),o.m,o.t,o.a,o.cc,o.sh,cln(o.mid),cln(o.tid),ms.join(','),cln(o.tx),o.fc,cln(o.val)].join('|');
+  return [o.id,o.pid,o.c,cln(o.n),o.s.join(','),o.cf.join(','),o.col.join(','),o.m,o.t,o.a,o.cc,o.sh,cln(o.mid),cln(o.tid),ms.join(','),cln(o.tx),o.fc,cln(o.val),o.src].join('|');
 });
 
 window.ALL=lines.join('\n');
@@ -178,6 +182,6 @@ chunks.forEach((txt,idx)=>{
   b.onclick=()=>{navigator.clipboard.writeText(txt);b.innerText='COPIED '+(idx+1);};
   btns.appendChild(b);
 });
-s.innerText='DONE: '+arr.length+' objects in '+chunks.length+' parts ('+window.ALL.length+' chars). Click COPY PART 1, 2, etc.';
+s.innerText='DONE: '+arr.length+' objects in '+chunks.length+' parts ('+window.ALL.length+' chars).';
 };
 </script>
